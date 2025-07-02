@@ -4,9 +4,6 @@
 ## Author: Grace Legris, Research Data Analyst
 # ==========================================================================================================================================
 
-source("load_path.R")
-library(readstata13)
-
 kano_dry <- read.dta13(file.path(KidsData, "KN_IP_alldata_dry.dta"))
 kano_wet <- read.dta13(file.path(KidsData, "KN_IP_alldata_wet.dta"))
 ibadan_dry <- read.dta13(file.path(KidsData, "IB_IP_alldata_dry.dta"))
@@ -264,6 +261,14 @@ kano_u18 <- kano %>% dplyr::filter(age < 18)
 ibadan_u18 <- ibadan %>% dplyr::filter(age < 18)
 kano_adult <- kano %>% dplyr::filter(age >= 18)
 ibadan_adult <- ibadan %>% dplyr::filter(age >= 18)
+
+# save cleaned datasets
+write.csv(kano_dry, file = file.path(OutputDir, "kano_dry.csv"), row.names = FALSE)
+write.csv(kano_wet, file = file.path(OutputDir, "kano_wet.csv"), row.names = FALSE)
+write.csv(ibadan_dry, file = file.path(OutputDir, "ibadan_dry.csv"), row.names = FALSE)
+write.csv(ibadan_wet, file = file.path(OutputDir, "ibadan_wet.csv"), row.names = FALSE)
+write.csv(kano, file = file.path(OutputDir, "kano_wet_dry.csv"), row.names = FALSE)
+write.csv(ibadan, file = file.path(OutputDir, "ibadan_wet_dry.csv"), row.names = FALSE)
 
 # summarize by ward to calculate prevalence and incidence
 summarize_by_ward <- function(data) {
