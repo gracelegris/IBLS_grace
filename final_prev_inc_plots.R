@@ -57,16 +57,8 @@ plot_prev_incidence_single <- function(data, location_name, age_label) {
   #     )
   # }
   
-  # color palettes for confidence intervals
-  wet_palette <- c("#d0e0f3", "#97a4d3")
-  dry_palette <- c("#f9efc1", "#eabc8a")
-  combined_palette <- c("#eef2c3", "#c9df86")
-  
-  # apply appropriate color palette 
-  palette <- switch(location_name,
-                    "Wet" = wet_palette,
-                    "Dry" = dry_palette,
-                    "Combined" = combined_palette)
+  # color palette for confidence intervals
+  ci_palette <- c("#BEBEBE", "#a9a9a9")
   
   data_summarized <- summarize_by_ward_settlement(data)
   
@@ -78,34 +70,63 @@ plot_prev_incidence_single <- function(data, location_name, age_label) {
   
   # generate plot
   if(age_label == "15+") {
-    ggplot(data_summarized, aes(x = prevalence, y = incidence)) +
-      geom_smooth(method = "loess", formula = y ~ x, se = TRUE, level = 0.95,
-                  fill = palette[1], color = "black", linetype = "solid", linewidth = 0.4) +  # adds 95% CI with trend line
-      geom_smooth(method = "loess", formula = y ~ x, se = TRUE, level = 0.68,
-                  fill = palette[2], color = NA) +  # 68% CI only shaded
-      geom_point(aes(color = settlement_type), alpha = 0.8, size = 2) +
-      scale_color_manual(values = c(
-        "Formal" = "#ff4500",
-        "Informal" = "#836fff",
-        "Slum" = "#1fd655"
-      )) +
-      labs(
-        subtitle = paste0(location_name, " (Age ", age_label, ", n = ", nrow(data), ")"),
-        x = "Prevalence",
-        y = "Incidence",
-        color = "Settlement Type"
-      ) +
-      theme_manuscript()
+    
+    if(location_name == "Wet") {
+      ggplot(data_summarized, aes(x = prevalence, y = incidence)) +
+        geom_smooth(method = "loess", formula = y ~ x, se = TRUE, level = 0.95,
+                    fill = ci_palette[1], color = "black", linetype = "solid", linewidth = 0.4) +  # adds 95% CI with trend line
+        geom_smooth(method = "loess", formula = y ~ x, se = TRUE, level = 0.68,
+                    fill = ci_palette[2], color = NA) +  # 68% CI only shaded
+        geom_point(aes(color = settlement_type), alpha = 0.8, size = 3) +
+        xlim(0, 1.0) +
+        ylim(0, 1.0) +
+        scale_color_manual(values = c(
+          "Formal" = "#00798c",
+          "Informal" = "#d1495b",
+          "Slum" = "#edae49"
+        )) +
+        labs(
+          subtitle = paste0(location_name, " (Age ", age_label, ", n = ", nrow(data), ")"),
+          x = "Prevalence",
+          y = "Incidence",
+          color = "Settlement Type"
+        ) +
+        theme_manuscript()
+    } else if (location_name %in% c("Dry", "Combined")) {
+      ggplot(data_summarized, aes(x = prevalence, y = incidence)) +
+        geom_smooth(method = "loess", formula = y ~ x, se = TRUE, level = 0.95,
+                    fill = ci_palette[1], color = "black", linetype = "solid", linewidth = 0.4) +  # adds 95% CI with trend line
+        geom_smooth(method = "loess", formula = y ~ x, se = TRUE, level = 0.68,
+                    fill = ci_palette[2], color = NA) +  # 68% CI only shaded
+        geom_point(aes(color = settlement_type), alpha = 0.8, size = 3) +
+        xlim(-0.02, 0.125) +
+        ylim(-0.02, 0.125) +
+        scale_color_manual(values = c(
+          "Formal" = "#00798c",
+          "Informal" = "#d1495b",
+          "Slum" = "#edae49"
+        )) +
+        labs(
+          subtitle = paste0(location_name, " (Age ", age_label, ", n = ", nrow(data), ")"),
+          x = "Prevalence",
+          y = "Incidence",
+          color = "Settlement Type"
+        ) +
+        theme_manuscript()
+    }
+    
   }
   else if(age_label %in% c("0–5", "6–15")) {
     # add linear fit line
     ggplot(data_summarized, aes(x = prevalence, y = incidence)) +
       geom_smooth(method = "lm", se = FALSE, color = "black", size = 0.4) +
-      geom_point(aes(color = settlement_type), alpha = 0.8, size = 2) +
+      geom_point(aes(color = settlement_type), alpha = 0.8, size = 3) +
+      xlim(0, 1.0) +
+      ylim(0, 1.0) +
       scale_color_manual(values = c(
-        "Formal" = "#ff4500",
-        "Informal" = "#836fff",
-        "Slum" = "#1fd655"
+        "Formal" = "#00798c",
+        "Informal" = "#d1495b",
+        "Slum" = "#edae49"
       )) +
       labs(
         subtitle = paste0(location_name, " (Age ", age_label, ", n = ", nrow(data), ")"),
@@ -171,5 +192,6 @@ final_plot <- plot_grid(
   rel_widths = c(0.9, 0.1),
   nrow = 1
 )
+final_plot
 
-ggsave(file.path(FigDir, "combined_only_prev_inc.png"), final_plot, width = 12, height = 12) 
+ggsave(file.path(FigDir, "combined_only_prev_inc.pdf"), final_plot, width = 13, height = 12) 
