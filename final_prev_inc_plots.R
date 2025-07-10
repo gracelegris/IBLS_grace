@@ -93,14 +93,37 @@ plot_prev_incidence_single <- function(data, location_name, age_label) {
         ) +
         theme_manuscript()
     } else if (location_name %in% c("Dry", "Combined")) {
-      ggplot(data_summarized, aes(x = prevalence, y = incidence)) +
-        geom_smooth(method = "loess", formula = y ~ x, se = TRUE, level = 0.95,
-                    fill = ci_palette[1], color = "black", linetype = "solid", linewidth = 0.4) +  # adds 95% CI with trend line
-        geom_smooth(method = "loess", formula = y ~ x, se = TRUE, level = 0.68,
-                    fill = ci_palette[2], color = NA) +  # 68% CI only shaded
+      
+      # manually calculate CIs so we can remove the negative values
+      # Fit loess model
+      loess_fit <- loess(incidence ~ prevalence, data_summarized)
+      
+      # Predict with standard error
+      pred <- predict(loess_fit, se = TRUE)
+      
+      # Create data frame of predictions
+      pred_df <- data_summarized %>%
+        mutate(
+          fit = pred$fit,
+          se = pred$se.fit,
+          df = pred$df,
+          ci_upper_95 = fit + qt(0.975, df) * se,
+          ci_lower_95 = pmax(fit - qt(0.975, df) * se, 0),
+          ci_upper_68 = fit + qt(0.84, df) * se,
+          ci_lower_68 = pmax(fit - qt(0.84, df) * se, 0)
+        )
+      
+      ggplot(pred_df, aes(x = prevalence, y = incidence)) +
+        geom_ribbon(aes(ymin = ci_lower_95, ymax = ci_upper_95), fill = ci_palette[1], alpha = 0.5) +
+        geom_ribbon(aes(ymin = ci_lower_68, ymax = ci_upper_68), fill = ci_palette[2], alpha = 0.5) +
+        geom_line(aes(y = fit), color = "black", linewidth = 0.4) +
+        # geom_smooth(method = "loess", formula = y ~ x, se = TRUE, level = 0.95,
+        #             fill = ci_palette[1], color = "black", linetype = "solid", linewidth = 0.4) +  # adds 95% CI with trend line
+        # geom_smooth(method = "loess", formula = y ~ x, se = TRUE, level = 0.68,
+        #             fill = ci_palette[2], color = NA) +  # 68% CI only shaded
         geom_point(aes(color = settlement_type), alpha = 0.8, size = 3) +
-        xlim(-0.02, 0.125) +
-        ylim(-0.02, 0.125) +
+        xlim(0, 0.125) +
+        ylim(0, 0.125) +
         scale_color_manual(values = c(
           "Formal" = "#00798c",
           "Informal" = "#d1495b",
